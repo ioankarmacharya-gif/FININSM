@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Valentine 💕</title>
+
+<style>
+  body{
+    margin:0;
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    background:linear-gradient(135deg,#ff9a9e,#fad0c4);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    overflow:hidden;
+  }
+
+  .card{
+    background:rgba(255,255,255,.95);
+    padding:30px 24px;
+    border-radius:22px;
+    width:min(520px,92vw);
+    text-align:center;
+    box-shadow:0 15px 40px rgba(0,0,0,.2);
+    position:relative;
+  }
+
+  h1{ margin:0 0 6px; }
+  p{ margin:8px 0 16px; }
+
+  .emoji{
+    font-size:42px;
+    margin-bottom:10px;
+  }
+
+  /* Button area */
+  .btn-row{
+    position:relative;
+    height:120px; /* gives room for the No to run around */
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:12px;
+  }
+
+  button{
+    border:none;
+    border-radius:999px;
+    padding:12px 20px;
+    font-size:16px;
+    cursor:pointer;
+    transition:.15s;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #yesBtn{
+    background:#ff4d6d;
+    color:white;
+  }
+
+  /* IMPORTANT: starts normal (NOT absolute) */
+  #noBtn{
+    background:#e5e7eb;
+    color:#111;
+  }
+
+  #stopBtn{
+    background:#111;
+    color:white;
+    display:none;
+    opacity:.92;
+  }
+
+  .final{
+    display:none;
+    margin-top:15px;
+    background:rgba(255,77,109,.1);
+    border:1px solid rgba(255,77,109,.3);
+    padding:16px;
+    border-radius:16px;
+    animation: pop .2s ease-out;
+  }
+
+  @keyframes pop{
+    from{ transform:scale(.97); opacity:0; }
+    to{ transform:scale(1); opacity:1; }
+  }
+
+  .small{
+    font-size:13px;
+    opacity:.8;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="card" id="card">
+  <div class="emoji" id="emoji">👉👈</div>
+
+  <h1 id="question">Lauren, will you be my Valentine?</h1>
+  <p id="subtext">No pressure… just vibes.</p>
+
+  <div class="btn-row" id="btnRow">
+    <button id="yesBtn">Yes 💘</button>
+    <button id="noBtn">No 🙃</button>
+    <button id="stopBtn">Okay I’ll stop 😅</button>
+  </div>
+
+  <div class="small" id="hint">Try pressing “No” 😌</div>
+
+  <div class="final" id="finalBox"></div>
+</div>
+
+<script>
+  const name = "Lauren";
+
+  const finalMessage = `
+    <h2 style="margin:0 0 6px;">YAYYY TYTY</h2>
+    <p style="margin:0;">
+      Okay it’s official — you’re my Valentine.<br>
+      Let's schedule a date:)
+    </p>
+  `;
+
+  const noTexts = [
+    "Are you sure? 🥺",
+    "Wrong button 😌",
+    "Lauren pls 😭",
+    "Try again 🙂",
+    "Be honest… you meant yes 😏",
+    "Okay last try 😳",
+    "I’m making it easy now 😌"
+  ];
+
+  const emojis = ["👉👈","😌","😭","😏","🫶","💗"];
+
+  const yesBtn = document.getElementById("yesBtn");
+  const noBtn = document.getElementById("noBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const emoji = document.getElementById("emoji");
+  const subtext = document.getElementById("subtext");
+  const finalBox = document.getElementById("finalBox");
+  const card = document.getElementById("card");
+  const question = document.getElementById("question");
+  const hint = document.getElementById("hint");
+
+  question.textContent = `${name}, will you be my Valentine?`;
+
+  let noCount = 0;
+  let yesScale = 1;
+  let armed = false; // becomes true once No starts dodging
+
+  function rand(min, max){
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  // Move the No button somewhere inside the card
+  function moveNo(){
+    // On first dodge: switch it to absolute positioning
+    if (!armed){
+      armed = true;
+
+      // Freeze its current position so it doesn't "jump" visually
+      const btnRect = noBtn.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+
+      const left = btnRect.left - cardRect.left;
+      const top  = btnRect.top  - cardRect.top;
+
+      noBtn.style.position = "absolute";
+      noBtn.style.left = left + "px";
+      noBtn.style.top  = top  + "px";
+    }
+
+    const cardRect = card.getBoundingClientRect();
+    const pad = 14;
+
+    const maxX = cardRect.width - noBtn.offsetWidth - pad;
+    const maxY = cardRect.height - noBtn.offsetHeight - pad;
+
+    // Keep it away from the title area a bit
+    const minY = 90;
+
+    noBtn.style.left = rand(pad, Math.max(pad, maxX)) + "px";
+    noBtn.style.top  = rand(minY, Math.max(minY, maxY)) + "px";
+  }
+
+  // Dodge immediately on hover (desktop) — from the start
+  noBtn.addEventListener("mouseenter", () => {
+    moveNo();
+  });
+
+  // Dodge on mobile touch — from the start
+  noBtn.addEventListener("touchstart", (e) => {
+    e.preventDefault(); // stops it from "clicking" on touch
+    moveNo();
+  }, { passive: false });
+
+  // If she somehow clicks No:
+  noBtn.addEventListener("click", () => {
+    noCount++;
+
+    yesScale = Math.min(yesScale + 0.2, 3.0);
+    yesBtn.style.transform = `scale(${yesScale})`;
+
+    subtext.textContent = noTexts[Math.min(noCount - 1, noTexts.length - 1)];
+    emoji.textContent = emojis[noCount % emojis.length];
+
+    stopBtn.style.display = "inline-block";
+    hint.textContent = "Okay okay I’m kidding (mostly).";
+  });
+
+  // Escape button (so it doesn't feel too forced)
+  stopBtn.addEventListener("click", () => {
+    subtext.textContent = "All good 😌 Thanks for playing.";
+    emoji.textContent = "🫶";
+    yesBtn.disabled = true;
+    noBtn.disabled = true;
+    stopBtn.disabled = true;
+    yesBtn.style.opacity = 0.55;
+    noBtn.style.opacity = 0.55;
+    stopBtn.style.opacity = 0.55;
+    hint.textContent = "Respect 🫡";
+  });
+
+  // YES
+  yesBtn.addEventListener("click", () => {
+    finalBox.innerHTML = finalMessage;
+    finalBox.style.display = "block";
+    emoji.textContent = "💖";
+    subtext.textContent = "Let’s gooooo 😤";
+
+    yesBtn.style.display = "none";
+    noBtn.style.display = "none";
+    stopBtn.style.display = "none";
+
+    hint.textContent = "Screenshot this for proof 😌";
+  });
+</script>
+
+</body>
+</html>
